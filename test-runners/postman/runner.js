@@ -19,11 +19,12 @@ var args = parser.parse_args();
 
 const parametersForTestRun = {
     collection: args.collection,
-    environment: args.environment,
+    environment: require(args.environment),
     reporters: args.reporters,
     insecure: args.insecure,
     iterationCount: parseInt(args.iterationCount),
-    silent: args.silent.toLowerCase() === 'true'
+    silent: args.silent.toLowerCase() === 'true',
+    folder: args.folder
 };
 
 newman.run(parametersForTestRun,
