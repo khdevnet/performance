@@ -33,7 +33,7 @@ level, but your application’s needs may force you to accept the decreased conc
 in favor of the data stability that results.
 
 
-### Performance notes
+## Performance notes
 #### use different storage engines for different tables, we can use MyIsam for tables which can be run without transactions [Innodb vs MyIsam](http://www.expertphp.in/article/what-are-the-main-differences-between-innodb-and-myisam#:~:text=InnoDB%20does%20not%20support%20FULLTEXT,is%20suitable%20for%20small%20project.)
 
 #### Use EXPLAIN keyword to see the execution plan for the query
@@ -59,7 +59,7 @@ in favor of the data stability that results.
 #### Use appropriate data types for columns
 #### Use same query to repeated cases it wi be used from query cache
  
-### Tune server parameters to better serve your application workload
+## Tune server parameters to better serve your application workload
 Azure Database for MySQL allows you to configure server parameters for the values that better serve your workload, check this documentation to learn how. Each application has best practices for those parameter, please review those in order to get the best out of the database server. Some of the parameters that you might need to check is:
 
 #### a- innodb_buffer_pool_size:
@@ -82,3 +82,6 @@ Turning slow query log off will save data collection overhead which contributes 
 
 #### g- log_queries_not_using_indexes= OFF
 This parameter helps you determine missing indexes, while its awesome to learn about missing indexes but keeping this parameter enabled all the time will drop query performance significantly, rule of thumb here is to use it when you need it. 
+
+## Resource
+[azure-database-for-mysql-performance-troubleshooting](https://techcommunity.microsoft.com/t5/azure-database-for-mysql/azure-database-for-mysql-performance-troubleshooting-basics/ba-p/782815)
