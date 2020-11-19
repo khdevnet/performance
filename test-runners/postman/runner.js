@@ -9,7 +9,6 @@ const parser = new ArgumentParser({
 
 parser.add_argument('-c', '--collection', { help: 'url to collection' });
 parser.add_argument('-e', '--environment', { help: 'url to environment' });
-parser.add_argument('-p', '--parallel', { help: 'Parralle run', default: '1' });
 parser.add_argument('-k', '--insecure', { help: 'Skip SSL verification', default: true });
 parser.add_argument('-n', '--iterationCount', { help: 'iteration count', default: '1' });
 parser.add_argument('--silent', { help: 'Disable terminal output', default: 'false' });
