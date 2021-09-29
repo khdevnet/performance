@@ -83,5 +83,97 @@ Turning slow query log off will save data collection overhead which contributes 
 #### g- log_queries_not_using_indexes= OFF
 This parameter helps you determine missing indexes, while its awesome to learn about missing indexes but keeping this parameter enabled all the time will drop query performance significantly, rule of thumb here is to use it when you need it. 
 
+
+## Locks detection
+### Flush locks
+#### Symptoms
+The telltale signs to look for include the following:
+* The query state of new queries is “Waiting for table flush.” This may
+occur for all new queries or only for queries accessing specific tables.
+* More and more connections are created.
+* Eventually, new connections fail as MySQL is out of connection. The error received for new connections is ER_CON_COUNT_ERROR: “ERROR 1040 (HY000): Too many connections” when using the classic MySQL protocol (by default port 3306) or “MySQL Error 5011: Could not open session” when using the X Protocol (by default port 33060).
+* There is at least one query that has been running later than the oldest request for a flush lock.
+* There may be a FLUSH TABLES statement in the process list, but this is not always the case.
+* When the FLUSH TABLES statement has waited for lock_wait_timeout, an ER_LOCK_WAIT_TIMEOUT error occurs: ERROR: 1205: Lock wait timeout exceeded; try restarting transaction.
+Since the default value for lock_wait_timeout is 365 days, this is only likely to occur if the timeout has been reduced.
+* If you connect with the mysql command-line client with a default schema set, the connection may seem to hang before you get to the prompt. The same can happen if you change the default schema with
+a connection open.
+#### The investigation
+The investigation of flush locks requires you to look at the list of queries running on the
+instance. Unlike other lock contentions, there are no Performance Schema tables or
+InnoDB monitor report that can be used to query for the blocking query directly.
+shows an example of the output using the sys.session view.
+```sql
+SELECT *
+FROM sys.session
+```
+
+### Record-Level Locks
+#### Symptoms
+In severe cases, you will get a lock wait timeout or a deadlock error, but in many cases, there may be no direct symptoms. Rather the symptom is that queries are slower than normal. This may range from being a fraction of a second slower to being many seconds slower.
+For cases where there is a lock wait timeout, you will see an ER_LOCK_WAIT_TIMEOUT error like the one in the following example: ERROR: 1205: Lock wait timeout exceeded; try restarting transaction
+
+#### The investigation
+You can query the data_locks and data_lock_waits tables in the Performance Schema which will show the raw lock data and pending locks, respectively. There is also the sys.innodb_lock_waits view which queries the two tables to find pairs of locks with one being blocked by the other.
+
+```sql
+SELECT *
+FROM sys.innodb_lock_waits
+```
+
+### Dead locks
+#### Symptoms
+The victim of a deadlock receives an error, and the lock_deadlocks InnoDB metric increments. The error that will be returned to the transaction that InnoDB chooses as the victim is ER_LOCK_DEADLOCK:
+ERROR: 1213: Deadlock found when trying to get lock; try restarting transaction The lock_deadlocks metric is very useful to keep an eye on how often deadlocks occur. A convenient way to track the value of lock_deadlocks is to use the sys.metrics 
+view:
+```sql
+SELECT *
+FROM sys.metrics
+WHERE Variable_name = 'lock_deadlocks'\G
+```
+
+#### The investigation
+```sql
+SELECT *
+FROM sys.metrics
+WHERE Variable_name = 'lock_deadlocks'
+```
+
+
+The main tool to analyze deadlocks is the section with information about the latest
+detected deadlock in the InnoDB monitor output. If you have the innodb_print_all_
+deadlocks option enabled (OFF by default), you may also have the deadlock information
+from the error log; however, the information is the same, so it does not change the
+analysis.
+The deadlock information contains four parts describing the deadlock and the result.
+The parts are
+* When the deadlock occurred.
+* Information for the first of the transactions involved in the deadlock.
+* Information for the second of the transactions involved in the
+deadlock.
+* Which of the transactions that was rolled back. This information is not included in the error log when innodb_print_all_deadlocks is enabled.
+The numbering of the two transactions is arbitrary, and the main purpose is to be
+able to refer to one transaction or the other. The two parts with transaction information
+are the most important ones. They include how long the transaction was active, some
+statistics about the size of the transactions in terms of locks taken and undo log entries
+and similar, the query that was blocking waiting for a lock, and information about the
+locks involved in the deadlock.
+The lock information is not as easy to interpret as when you use the data_locks and
+data_lock_waits tables and the sys.innodb_lock_waits view. However, it is not too
+difficult once you have tried to perform the analysis a few times.
+```sql
+SET GLOBAL innodb_print_all_deadlocks = 'ON';
+```
+The main tool to analyze deadlocks is the section with information about the latest
+detected deadlock in the InnoDB monitor output. If you have the innodb_print_all_
+deadlocks option enabled (OFF by default), you may also have the deadlock information
+from the error log; however, the information is the same, so it does not change the
+analysis.
+
+```sql
+SHOW ENGINE INNODB STATUS
+```
+
 ## Resource
+[MySQL 8 Query Performance Tuning]()
 [azure-database-for-mysql-performance-troubleshooting](https://techcommunity.microsoft.com/t5/azure-database-for-mysql/azure-database-for-mysql-performance-troubleshooting-basics/ba-p/782815)
