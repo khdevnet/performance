@@ -174,6 +174,25 @@ analysis.
 SHOW ENGINE INNODB STATUS
 ```
 
+# MySql manual autoincrement thread safe
+Locking reads - If you query data and then insert or update related data within the same transaction, the regular SELECT statement does not give enough protection. Other transactions can update or delete the same rows you just queried.
+Possible to use SELECT FOR UPDATE command to lock row
+
+[Locking reads](https://dev.mysql.com/doc/refman/8.0/en/innodb-locking-reads.html)
+
+User defined variable is thread safe per user connection
+[User variables](https://dev.mysql.com/doc/refman/8.0/en/user-variables.html)
+
+It is possible to use 
+```SQL
+UPDATE child_codes SET counter_field = LAST_INSERT_ID(counter_field + 1);
+SET @id = (SELECT LAST_INSERT_ID());
+use Id between multiple tables 
+INSERT INTO @Id
+INSERT INTO @Id
+
+```
+
 ## Resource
 [MySQL 8 Query Performance Tuning]()
 [azure-database-for-mysql-performance-troubleshooting](https://techcommunity.microsoft.com/t5/azure-database-for-mysql/azure-database-for-mysql-performance-troubleshooting-basics/ba-p/782815)
